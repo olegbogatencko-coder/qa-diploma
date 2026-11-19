@@ -26,6 +26,6 @@ services:
     working_dir: /app
     volumes:
       - ./gate-simulator:/app
-    command: sh -c "node server.js"
+    command: node server.js
     ports:
       - "9999:9999"
