@@ -19,3 +19,13 @@ services:
       POSTGRES_DB: app
       POSTGRES_USER: app
       POSTGRES_PASSWORD: pass
+
+  gate-simulator:
+    image: node:14-alpine
+    container_name: gate_simulator
+    working_dir: /app
+    volumes:
+      - ./gate-simulator:/app
+    command: sh -c "node server.js"
+    ports:
+      - "9999:9999"
