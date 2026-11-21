@@ -5,21 +5,25 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
         try {
-            // Если в запросе есть номер карты 1111... возвращаем успех, иначе отказ
-            if (body.includes('1111 2222 3333 4444')) {
+            const parsed = JSON.parse(body);
+            // Забираем номер карты из JSON
+            const cardNumber = parsed.number || "";
+
+            // Если это карта на отказ (без учета пробелов) — отказываем
+            if (cardNumber.replace(/\s/g, '') === '5555666677778888') {
                 res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ status: "APPROVED" }));
+                res.end(JSON.stringify({status: "DECLINED"}));
             } else {
+                // Во всех остальных случаях одобряем
                 res.writeHead(200, {'Content-Type': 'application/json'});
-                res.end(JSON.stringify({ status: "DECLINED" }));
+                res.end(JSON.stringify({status: "APPROVED"}));
             }
         } catch (e) {
-            res.writeHead(500);
+            console.error('Error parsing JSON:', e);
+            res.writeHead(400);
             res.end();
         }
     });
 });
 
-server.listen(9999, () => {
-    console.log('Simulator running on port 9999');
-});
+server.listen(9999, () => console.log('Simulator running on 9999'));
