@@ -47,7 +47,6 @@ public class BuyTourTest {
         mainPage.clickBuy();
         paymentPage.fillForm("1111 2222 3333 4444", "12", "26", "IVAN IVANOV", "123");
 
-        // Проверяем уведомление и БД (этот сценарий работает корректно)
         $(".notification__content").shouldBe(visible).shouldHave(text("Операция одобрена Банком"));
 
         String actualStatus = getLastPaymentStatus();
@@ -55,12 +54,13 @@ public class BuyTourTest {
     }
 
     @Test
-    void shouldNotBuyTourWithDeclinedCard() {
+    void shouldNotBuyTourWithDeclinedCard() throws InterruptedException {
         mainPage.clickBuy();
         paymentPage.fillForm("5555 6666 7777 8888", "12", "26", "IVAN IVANOV", "123");
 
-        // БАГ: приложение показывает "Успешно", хотя должен быть отказ.
-        // Проверяем только БД, так как там статус записывается верно (Issue #1)
+        // Даем приложению время записать данные в БД
+        Thread.sleep(8000);
+
         String actualStatus = getLastPaymentStatus();
         assertEquals("DECLINED", actualStatus, "В базе данных должен быть статус DECLINED");
     }
@@ -72,7 +72,6 @@ public class BuyTourTest {
         mainPage.clickBuyInCredit();
         paymentPage.fillForm("1111 2222 3333 4444", "12", "26", "IVAN IVANOV", "123");
 
-        // Проверяем уведомление и БД
         $(".notification__content").shouldBe(visible).shouldHave(text("Операция одобрена Банком"));
 
         String actualStatus = getLastCreditStatus();
@@ -80,12 +79,13 @@ public class BuyTourTest {
     }
 
     @Test
-    void shouldNotBuyTourOnCreditWithDeclinedCard() {
+    void shouldNotBuyTourOnCreditWithDeclinedCard() throws InterruptedException {
         mainPage.clickBuyInCredit();
         paymentPage.fillForm("5555 6666 7777 8888", "12", "26", "IVAN IVANOV", "123");
 
-        // БАГ: приложение показывает "Успешно", хотя должен быть отказ.
-        // Проверяем только БД, так как там статус записывается верно (Issue #2)
+        // Даем приложению время записать данные в БД
+        Thread.sleep(8000);
+
         String actualStatus = getLastCreditStatus();
         assertEquals("DECLINED", actualStatus, "В базе данных должен быть статус DECLINED для кредита");
     }
