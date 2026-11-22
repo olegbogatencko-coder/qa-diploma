@@ -11,7 +11,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Selenide.$;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static ru.netology.qa.data.DatabaseHelper.getLastCreditStatus;
 import static ru.netology.qa.data.DatabaseHelper.getLastPaymentStatus;
 
 public class BuyTourTest {
@@ -21,9 +24,9 @@ public class BuyTourTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        Configuration.timeout = 10000;
+        Configuration.timeout = 20000; // Увеличили до 20 секунд
 
-        // Очищаем базу данных перед каждым тестом
+        // Очищаем базу перед каждым тестом
         String dbUrl = "jdbc:mysql://localhost:3306/app";
         String user = "app";
         String pass = "pass";
@@ -34,22 +37,54 @@ public class BuyTourTest {
         }
 
         mainPage.openPage();
-        mainPage.clickBuy();
     }
 
+    // --- ТЕСТЫ ДЛЯ ОБЫЧНОЙ ОПЛАТЫ ---
+
     @Test
-    void shouldBuyTourWithApprovedCard() throws InterruptedException {
+    void shouldBuyTourWithApprovedCard() {
+        mainPage.clickBuy();
         paymentPage.fillForm("1111 2222 3333 4444", "12", "26", "IVAN IVANOV", "123");
-        Thread.sleep(6000); // Увеличили паузу до 3 секунд
+
+        // Проверяем текст без visible (элемент может быть скрыт, но текст в нем есть)
+        $(".notification__content").shouldHave(text("Операция одобрена Банком"));
+
         String actualStatus = getLastPaymentStatus();
         assertEquals("APPROVED", actualStatus, "В базе данных должен быть статус APPROVED");
     }
 
     @Test
-    void shouldNotBuyTourWithDeclinedCard() throws InterruptedException {
+    void shouldNotBuyTourWithDeclinedCard() {
+        mainPage.clickBuy();
         paymentPage.fillForm("5555 6666 7777 8888", "12", "26", "IVAN IVANOV", "123");
-        Thread.sleep(3000); // Увеличили паузу до 3 секунд
+
+        $(".notification__content").shouldHave(text("Ошибка! Банк отказал в проведении операции."));
+
         String actualStatus = getLastPaymentStatus();
         assertEquals("DECLINED", actualStatus, "В базе данных должен быть статус DECLINED");
+    }
+
+    // --- ТЕСТЫ ДЛЯ КРЕДИТА ---
+
+    @Test
+    void shouldBuyTourOnCreditWithApprovedCard() {
+        mainPage.clickBuyInCredit();
+        paymentPage.fillForm("1111 2222 3333 4444", "12", "26", "IVAN IVANOV", "123");
+
+        $(".notification__content").shouldHave(text("Операция одобрена Банком"));
+
+        String actualStatus = getLastCreditStatus();
+        assertEquals("APPROVED", actualStatus, "В базе данных должен быть статус APPROVED для кредита");
+    }
+
+    @Test
+    void shouldNotBuyTourOnCreditWithDeclinedCard() {
+        mainPage.clickBuyInCredit();
+        paymentPage.fillForm("5555 6666 7777 8888", "12", "26", "IVAN IVANOV", "123");
+
+        $(".notification__content").shouldHave(text("Ошибка! Банк отказал в проведении операции."));
+
+        String actualStatus = getLastCreditStatus();
+        assertEquals("DECLINED", actualStatus, "В базе данных должен быть статус DECLINED для кредита");
     }
 }
