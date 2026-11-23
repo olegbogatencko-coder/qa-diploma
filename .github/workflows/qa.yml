@@ -1,0 +1,59 @@
+name: QA Diploma Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: app
+          MYSQL_USER: app
+          MYSQL_PASSWORD: pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create Database Tables
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uapp -ppass app -e "CREATE TABLE IF NOT EXISTS payment_entity (id VARCHAR(36) PRIMARY KEY, amount BIGINT, created TIMESTAMP, status VARCHAR(20), transaction_id VARCHAR(36)); CREATE TABLE IF NOT EXISTS credit_request_entity (id VARCHAR(36) PRIMARY KEY, bank_id VARCHAR(36), created TIMESTAMP, status VARCHAR(20));"
+
+      - name: Start Emulator
+        run: |
+          cd gate-simulator
+          npm install
+          node server.js &
+          sleep 5
+
+      - name: Start Application
+        run: |
+          java -jar aqa-shop.jar --spring.payment-gate.url=http://127.0.0.1:9999/payment --spring.credit-gate.url=http://127.0.0.1:9999/credit &
+          sleep 15
+
+      - name: Run Tests
+        run: ./gradlew test
