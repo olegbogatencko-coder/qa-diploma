@@ -36,6 +36,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
       - name: Create Database Tables
         run: |
           mysql -h 127.0.0.1 -P 3306 -uapp -ppass app -e "CREATE TABLE IF NOT EXISTS payment_entity (id VARCHAR(36) PRIMARY KEY, amount BIGINT, created TIMESTAMP, status VARCHAR(20), transaction_id VARCHAR(36)); CREATE TABLE IF NOT EXISTS credit_request_entity (id VARCHAR(36) PRIMARY KEY, bank_id VARCHAR(36), created TIMESTAMP, status VARCHAR(20));"

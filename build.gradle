@@ -40,5 +40,5 @@ dependencies {
 test {
     useJUnitPlatform()
     // Настройка для Selenide, чтобы в CI (GitHub Actions) тесты шли без экрана
-    systemProperty 'selenide.headless', System.getProperty('selenide.headless')
+    systemProperty 'selenide.headless', 'true'
 }
