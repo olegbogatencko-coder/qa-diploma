@@ -52,5 +52,8 @@ jobs:
           java -jar aqa-shop.jar --spring.payment-gate.url=http://127.0.0.1:9999/payment --spring.credit-gate.url=http://127.0.0.1:9999/credit &
           sleep 15
 
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
       - name: Run Tests
         run: ./gradlew test
